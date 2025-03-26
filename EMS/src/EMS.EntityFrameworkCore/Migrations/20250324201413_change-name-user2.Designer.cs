@@ -4,6 +4,7 @@ using EMS.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace EMS.Migrations
 {
     [DbContext(typeof(EMSDbContext))]
-    partial class EMSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250324201413_change-name-user2")]
+    partial class changenameuser2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2261,12 +2264,9 @@ namespace EMS.Migrations
                     b.ToTable("AbpTenantConnectionStrings", (string)null);
                 });
 
-            modelBuilder.Entity("EMS.Entities.AppUsers", b =>
+            modelBuilder.Entity("EMS.Entities.AppUser", b =>
                 {
                     b.HasBaseType("Volo.Abp.Identity.IdentityUser");
-
-                    b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateOnly?>("BOD")
                         .HasColumnType("date");
@@ -2277,7 +2277,7 @@ namespace EMS.Migrations
                     b.Property<float?>("Weight")
                         .HasColumnType("real");
 
-                    b.HasDiscriminator().HasValue("AbpUsers");
+                    b.HasDiscriminator().HasValue("AppUser");
                 });
 
             modelBuilder.Entity("EMS.Entities.CartItem", b =>

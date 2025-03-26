@@ -21,5 +21,10 @@ namespace EMS.DTO
             ErrorMessage = "Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character, and must be at least 8 characters long.")]
         [PasswordPropertyText]
         public string Password { get; set; }
+
+        public float? Weight { get; set; }
+        public float? Height { get; set; }
+        public DateTime? BOD { get; set; }
+        public string? Address { get; set; }
     }
 }

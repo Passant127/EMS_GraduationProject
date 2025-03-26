@@ -27,6 +27,8 @@ namespace EMS.IServices
         /// <returns>A <see cref="RegisterResultDto"/> containing the result of the registration attempt.</returns>
         Task<RegisterResultDto> RegisterAsync(RegisterInputDto input);
 
+        Task<UserDataDto> GetCurrentUserDetailsAsync();
+
 
     }
 }

@@ -4,6 +4,7 @@ using EMS.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace EMS.Migrations
 {
     [DbContext(typeof(EMSDbContext))]
-    partial class EMSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250326032601_FixExtraPropertyDictionary")]
+    partial class FixExtraPropertyDictionary
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2277,7 +2280,7 @@ namespace EMS.Migrations
                     b.Property<float?>("Weight")
                         .HasColumnType("real");
 
-                    b.HasDiscriminator().HasValue("AbpUsers");
+                    b.HasDiscriminator().HasValue("AppUsers");
                 });
 
             modelBuilder.Entity("EMS.Entities.CartItem", b =>
