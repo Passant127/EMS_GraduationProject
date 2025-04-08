@@ -40,7 +40,7 @@
 
   <ItemGroup Condition="Exists('./openiddict.pfx')">
     <None Remove="openiddict.pfx" />
-    <EmbeddedResource Include="openiddict.pfx">
+    <EmbeddedResource Include="wwwroot\certs\openiddict.pfx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
@@ -60,5 +60,12 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="wwwroot\certs\openiddict.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 
 </Project>
