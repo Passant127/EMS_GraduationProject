@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using Blazorise.Bootstrap5;
 using Blazorise.Icons.FontAwesome;
@@ -43,6 +43,7 @@ using Volo.Abp.UI;
 using Volo.Abp.UI.Navigation;
 using Volo.Abp.UI.Navigation.Urls;
 using Volo.Abp.VirtualFileSystem;
+using System.Security.Cryptography.X509Certificates;
 
 namespace EMS.Blazor;
 
@@ -88,18 +89,39 @@ public class EMSBlazorModule : AbpModule
                 options.UseAspNetCore();
             });
         });
+        PreConfigure<AbpOpenIddictAspNetCoreOptions>(options =>
+        {
+            options.AddDevelopmentEncryptionAndSigningCertificate = false;
+        });
 
         if (!hostingEnvironment.IsDevelopment())
         {
-            PreConfigure<AbpOpenIddictAspNetCoreOptions>(options =>
-            {
-                options.AddDevelopmentEncryptionAndSigningCertificate = false;
-            });
 
-            PreConfigure<OpenIddictServerBuilder>(serverBuilder =>
+        
+
+            // ✅ This is your custom .pfx-based certificate
+            if (!hostingEnvironment.IsDevelopment())
             {
-                serverBuilder.AddProductionEncryptionAndSigningCertificate("openiddict.pfx", "7a3e024a-aaf4-4ccb-8e27-701c4e8d86e3");
-            });
+                PreConfigure<OpenIddictServerBuilder>(serverBuilder =>
+                {
+                    var certPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "certs", "openiddict.pfx");
+                    var certPassword = "7a3e024a-aaf4-4ccb-8e27-701c4e8d86e3";
+
+                    if (!File.Exists(certPath))
+                    {
+                        throw new FileNotFoundException("Certificate not found!", certPath);
+                    }
+
+                    var cert = new X509Certificate2(certPath, certPassword, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet);
+
+                    serverBuilder
+                        .AddEncryptionCertificate(cert)
+                        .AddSigningCertificate(cert);
+
+                });
+            }
+
+
         }
     }
 
@@ -198,6 +220,7 @@ public class EMSBlazorModule : AbpModule
     //        .AddFontAwesomeIcons();
     //}
 
+
     private void ConfigureMenu(ServiceConfigurationContext context)
     {
         Configure<AbpNavigationOptions>(options =>
@@ -229,6 +252,7 @@ public class EMSBlazorModule : AbpModule
             options.AddMaps<EMSBlazorModule>();
         });
     }
+
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {

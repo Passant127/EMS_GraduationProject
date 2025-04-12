@@ -6,14 +6,12 @@ using Volo.Abp.Application.Dtos;
 
 namespace EMS.DTO
 {
-    public class WorkoutDto : FullAuditedEntityDto<int>
+    public class WorkoutDto : EntityDto<int>
     {
         public string Name { get; set; }
         public string Description { get; set; }
         public string VideoUrl { get; set; }
-        public string Duration { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+
     }
 
     public class CreateUpdateWorkoutDto
@@ -25,6 +23,5 @@ namespace EMS.DTO
         public string Description { get; set; }
 
         public string VideoUrl { get; set; }
-        public string Duration { get; set; }
     }
 }

@@ -34,6 +34,7 @@ using EMS.IServices;
 using Microsoft.AspNetCore.Http;
 using OpenIddict.Server;
 using EMS.DTO;
+using EMS.Entities;
 
 namespace EMS.Services;
 // Service Implementation 
@@ -51,7 +52,7 @@ public class AuthenticationAppService : ApplicationService, IAuthenticationAppSe
     private readonly IConfiguration _config;
     private readonly IRepository<Tenant, Guid> _tenantRepository;
     private readonly IOptionsMonitor<OpenIddictServerOptions> _oidcOptions;
-
+    private readonly IRepository<AppUsers, Guid> _appUserRepository;
 
     public AuthenticationAppService(
         SignInManager<IdentityUser> signInManager,
@@ -61,7 +62,7 @@ public class AuthenticationAppService : ApplicationService, IAuthenticationAppSe
         IRepository<IdentityUser, Guid> userRepository,
         IIdentityRoleRepository roleRepository,
         IConfiguration config,
-        IOptionsMonitor<OpenIddictServerOptions> oidcOptions
+        IOptionsMonitor<OpenIddictServerOptions> oidcOptions, IRepository<AppUsers, Guid> appUserRepository
 
         )
     {
@@ -73,7 +74,7 @@ public class AuthenticationAppService : ApplicationService, IAuthenticationAppSe
         _roleRepository = roleRepository;
         _config = config;
         _oidcOptions = oidcOptions;
-
+         _appUserRepository = appUserRepository;
     }
     /// <inheritdoc/>
     //public async Task<Tenant> GetTenantByNameDtoAsync(string name)
@@ -234,7 +235,8 @@ public class AuthenticationAppService : ApplicationService, IAuthenticationAppSe
         try
         {
 
-            var user = new IdentityUser(GuidGenerator.Create(), input.UserName, input.Email, null);
+            var user = new AppUsers(GuidGenerator.Create(), input.UserName, input.Email,input.Height,input.Weight,input.BOD, null,input.Address);
+
             var createdUser = await _userManager.CreateAsync(user, input.Password);
             await _userManager.SetPhoneNumberAsync(user, input.Phone);
             if (!createdUser.Succeeded)
@@ -353,5 +355,41 @@ public class AuthenticationAppService : ApplicationService, IAuthenticationAppSe
         var tenant = await AsyncExecuter.FirstOrDefaultAsync(query);
         return tenant;
     }
+
+
+
+    public async Task<UserDataDto> GetCurrentUserDetailsAsync()
+    {
+        var userId = CurrentUser.Id;
+
+        if (!userId.HasValue)
+        {
+            throw new UserFriendlyException("User is not authenticated.");
+        }
+
+        var user = await _appUserRepository.GetAsync(userId.Value);
+
+        if (user == null)
+        {
+            throw new EntityNotFoundException("User not found.");
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+
+        return new UserDataDto
+        {
+            Id = user.Id,
+            UserName = user.UserName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            BOD = user.BOD.HasValue ? user.BOD.Value.ToDateTime(TimeOnly.MinValue) : null,
+            Height = user.Height,
+            Weight = user.Weight,
+            Address = user.Address,
+
+    
+        };
+    }
+
 }
 

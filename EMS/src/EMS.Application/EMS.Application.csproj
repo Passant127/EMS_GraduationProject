@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.14" />
     <PackageReference Include="OpenIddict.Server" Version="5.0.0" />
     <PackageReference Include="Volo.Abp.Account.Application" Version="8.0.0" />
     <PackageReference Include="Volo.Abp.Identity.Application" Version="8.0.0" />

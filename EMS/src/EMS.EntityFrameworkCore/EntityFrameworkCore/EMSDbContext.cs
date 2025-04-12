@@ -41,6 +41,7 @@ public class EMSDbContext :
 
     //Identity
     public DbSet<IdentityUser> Users { get; set; }
+    public DbSet<AppUsers> AppUser { get; set; }
     public DbSet<IdentityRole> Roles { get; set; }
     public DbSet<IdentityClaimType> ClaimTypes { get; set; }
     public DbSet<OrganizationUnit> OrganizationUnits { get; set; }
@@ -56,6 +57,12 @@ public class EMSDbContext :
     //My Entities
     public DbSet<Workout> Workouts { get; set; }
     public DbSet<Recipe> Recipes { get; set; }
+    public DbSet<CartItem> CartItems { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderItem> OrderItems{ get; set; }
+    public DbSet<Product> Products{ get; set; }
+    public DbSet<ContactUs> ContactUs{ get; set; }
+    public DbSet<FitnessInfo> FitnessInfo { get; set; }
 
 
 
@@ -70,6 +77,11 @@ public class EMSDbContext :
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.Entity<IdentityUser>(b =>
+        {
+            b.HasDiscriminator<string>("Discriminator")
+                            .HasValue<AppUsers>("AbpUsers");
+        });
 
         /* Include modules to your migration db context */
 
