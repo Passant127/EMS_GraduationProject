@@ -275,6 +275,7 @@ public class EMSBlazorModule : AbpModule
         app.UseCorrelationId();
         app.UseStaticFiles();
         app.UseRouting();
+        app.UseCors();
         app.UseAuthentication();
         app.UseMiddleware<TokenCheckMiddleware>();
         app.UseAbpOpenIddictValidation();
