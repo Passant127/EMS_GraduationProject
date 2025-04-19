@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,7 @@ namespace EMS.Blazor
     {
         public async static Task<int> Main(string[] args)
         {
+            var DefaultCorsPolicyName = "Default";
             Log.Logger = new LoggerConfiguration()
 #if DEBUG
                 .MinimumLevel.Debug()
@@ -32,6 +34,18 @@ namespace EMS.Blazor
             {
                 Log.Information("Starting web host.");
                 var builder = WebApplication.CreateBuilder(args);
+                builder.Services.AddCors(options =>
+                {
+                    options.AddPolicy("Default", policy =>
+                    {
+                        policy
+                            .WithOrigins("http://localhost:4200")
+                            .AllowAnyHeader()
+                            .AllowAnyMethod()
+                            .AllowCredentials(); // only if you're using cookies or Authorization header
+                    });
+              
+                });
 
                 // Add AppSettings and Autofac configuration
                 builder.Host.AddAppSettingsSecretsJson()
