@@ -271,11 +271,11 @@ public class EMSBlazorModule : AbpModule
             app.UseHsts();
         }
 
-        app.UseHttpsRedirection();
+        //app.UseHttpsRedirection();
         app.UseCorrelationId();
         app.UseStaticFiles();
         app.UseRouting();
-        app.UseCors();
+        app.UseCors("Default");
         app.UseAuthentication();
         app.UseMiddleware<TokenCheckMiddleware>();
         app.UseAbpOpenIddictValidation();

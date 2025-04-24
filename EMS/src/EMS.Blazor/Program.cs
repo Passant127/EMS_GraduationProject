@@ -39,7 +39,7 @@ namespace EMS.Blazor
                     options.AddPolicy("Default", policy =>
                     {
                         policy
-                            .WithOrigins("http://localhost:4200")
+                            .WithOrigins("https://ems-fe-9eda0.web.app")
                             .AllowAnyHeader()
                             .AllowAnyMethod()
                             .AllowCredentials(); // only if you're using cookies or Authorization header
