@@ -39,13 +39,17 @@ namespace EMS.Blazor
                     options.AddPolicy("Default", policy =>
                     {
                         policy
-                            .WithOrigins("https://ems-fe-9eda0.web.app")
+                            .WithOrigins(
+                                "https://ems-fe-9eda0.web.app",
+                                "http://localhost:4200",      // for Angular dev server
+                                "https://localhost:4200"      // if testing over HTTPS
+                            )
                             .AllowAnyHeader()
                             .AllowAnyMethod()
-                            .AllowCredentials(); // only if you're using cookies or Authorization header
+                            .AllowCredentials(); // needed for cookies or Authorization headers
                     });
-              
                 });
+
 
                 // Add AppSettings and Autofac configuration
                 builder.Host.AddAppSettingsSecretsJson()

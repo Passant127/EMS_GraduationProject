@@ -25,9 +25,17 @@ namespace EMS.Services
             _productRepository = productRepository;
         }
 
+
+
         public async Task<Guid> CreateOrderAsync(bool isCod)
         {
-            var cartItems = await _cartRepository.GetListAsync();
+            if (CurrentUser.Id == null)
+            {
+                throw new UserFriendlyException("You must be logged in to place an order.");
+            }
+
+            var customerId = CurrentUser.GetId();
+            var cartItems = await _cartRepository.GetListAsync(x => x.CustomerId == customerId);
 
             if (cartItems.Count == 0)
             {
@@ -40,8 +48,10 @@ namespace EMS.Services
             foreach (var cartItem in cartItems)
             {
                 var product = await _productRepository.GetAsync(cartItem.ProductId);
+
                 totalAmount += product.Price * cartItem.Quantity;
 
+                // 🛠️ DO NOT set Id — EF will generate it
                 orderItems.Add(new OrderItem
                 {
                     ProductId = product.Id,
@@ -52,23 +62,41 @@ namespace EMS.Services
 
             var order = new Order
             {
-                UserId = CurrentUser.Id.GetValueOrDefault(), // Assuming you have access to the current user
+
+                UserId = customerId,
                 TotalAmount = totalAmount,
                 Status = OrderStatus.Placed,
                 IsCOD = isCod,
                 OrderItems = orderItems
             };
 
-            await _orderRepository.InsertAsync(order);
+            await _orderRepository.InsertAsync(order, autoSave: true);
+
             return order.Id;
         }
 
-       
+
+
 
         public async Task<OrderSummaryDto> GetOrderSummaryAsync()
         {
-            var cartItems = await _cartRepository.GetListAsync();
-            var products = await _productRepository.GetListAsync();
+            if (CurrentUser.Id == null)
+            {
+                throw new UserFriendlyException("You must be logged in to view the order summary.");
+            }
+
+            var customerId = CurrentUser.GetId();
+
+            // ✅ Get only cart items belonging to the current customer
+            var cartItems = await _cartRepository.GetListAsync(x => x.CustomerId == customerId);
+
+            if (!cartItems.Any())
+            {
+                throw new UserFriendlyException("Your cart is empty.");
+            }
+
+            var productIds = cartItems.Select(x => x.ProductId).Distinct().ToList();
+            var products = await _productRepository.GetListAsync(p => productIds.Contains(p.Id));
 
             decimal subtotal = 0;
 
@@ -81,7 +109,7 @@ namespace EMS.Services
                 }
             }
 
-            decimal shipping = 50.0M; // أو dynamic حسب نوع الشحن
+            decimal shipping = 50.0M; // Can be dynamic based on rules
             decimal total = subtotal + shipping;
 
             return new OrderSummaryDto
@@ -93,5 +121,4 @@ namespace EMS.Services
         }
 
     }
-
 }

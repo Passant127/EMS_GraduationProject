@@ -9,6 +9,9 @@ namespace EMS.IServices
     {
         Task AddToCartAsync(int productId, int quantity);
         Task<List<CartItemDto>> GetCartItemsAsync();
+        Task RemoveFromCartAsync(int productId);
+        Task UpdateCartItemAsync(int productId, int quantity);
+
     }
 
     public class CartItemDto
@@ -17,7 +20,8 @@ namespace EMS.IServices
         public string ProductName { get; set; }
         public int Quantity { get; set; }
         public decimal Price { get; set; }
-        public decimal TotalPrice => Quantity * Price;
+        public decimal TotalPrice { get; set; }
+        public string? ImageUrl { get; set; }
     }
     public class AddToCartDto
     {
