@@ -1,104 +1,133 @@
-﻿using EMS.DTO;
+﻿
+using EMS.DTO;
 using EMS.Entities;
 using EMS.IServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Users;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Dynamic.Core;
 
 namespace EMS.Services
 {
-    using System;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using Volo.Abp.Application.Dtos;
-    using Volo.Abp.Domain.Repositories;
-    using Volo.Abp.Application.Services;
-    using Volo.Abp.Users;
-    using System.Linq.Dynamic.Core;
-    using AutoMapper.Internal.Mappers;
-    using Microsoft.EntityFrameworkCore;
-
-    namespace EMS
+    public class FitnessInfoAppService : CrudAppService<
+          FitnessInfo, FitnessInfoDto, int,
+          PagedAndSortedResultRequestDto, CreateUpdateFitnessInfoDto>, IFitnessInfoAppService
     {
-        public class FitnessInfoAppService : CrudAppService<
-            FitnessInfo, // The Entity
-            FitnessInfoDto, // Used to show entities
-            int, // Primary Key
-            PagedAndSortedResultRequestDto, // Paging and sorting
-            CreateUpdateFitnessInfoDto>, // Used to create/update
-            IFitnessInfoAppService
+        private readonly ICurrentUser _currentUser;
+
+        public FitnessInfoAppService(IRepository<FitnessInfo, int> repository, ICurrentUser currentUser)
+            : base(repository)
         {
-            private readonly ICurrentUser _currentUser;
+            _currentUser = currentUser;
+        }
 
-            public FitnessInfoAppService(IRepository<FitnessInfo, int> repository, ICurrentUser currentUser)
-                : base(repository)
-            {
-                _currentUser = currentUser;
-            }
-
-   
-
-         public override async Task<PagedResultDto<FitnessInfoDto>> GetListAsync(PagedAndSortedResultRequestDto input)
+        public override async Task<PagedResultDto<FitnessInfoDto>> GetListAsync(PagedAndSortedResultRequestDto input)
         {
-            // Get CustomerId from the token (current user)
             var customerId = _currentUser.Id;
+            var query = Repository.GetQueryableAsync().Result
+                .Include(s => s.Workout)
+                .Where(f => f.CustomerId == customerId.ToString());
 
-            // Get the queryable for FitnessInfo
-            var query =  Repository.GetQueryableAsync().Result.Include(s=>s.Workout).Where(f => f.CustomerId == customerId);
-
-  
-
-            // Check if Sorting is provided
             if (!string.IsNullOrEmpty(input.Sorting))
             {
-                // Apply dynamic sorting if Sorting string is provided
                 query = ApplySorting(query, input.Sorting);
             }
 
             var totalCount = await query.CountAsync();
-            var items = await query
-                .Skip(input.SkipCount)
-                .Take(input.MaxResultCount)
-                .ToListAsync();
-
+            var items = await query.Skip(input.SkipCount).Take(input.MaxResultCount).ToListAsync();
             var result = ObjectMapper.Map<List<FitnessInfo>, List<FitnessInfoDto>>(items);
-              
-
             return new PagedResultDto<FitnessInfoDto>(totalCount, result);
         }
 
-        // Method to apply sorting dynamically based on the string
         private IQueryable<FitnessInfo> ApplySorting(IQueryable<FitnessInfo> query, string sorting)
         {
-            // Apply sorting to the query based on the field
-            // Assuming sorting string is like "PropertyName ASC" or "PropertyName DESC"
             return query.OrderBy(sorting);
         }
 
-        // Override Create method to set CustomerId from token
         public override async Task<FitnessInfoDto> CreateAsync(CreateUpdateFitnessInfoDto input)
+        {
+            input.CustomerId = _currentUser.Id.ToString();
+            var fitnessInfo = ObjectMapper.Map<CreateUpdateFitnessInfoDto, FitnessInfo>(input);
+            var saved = await Repository.InsertAsync(fitnessInfo);
+            return ObjectMapper.Map<FitnessInfo, FitnessInfoDto>(saved);
+        }
+
+        // ABP-style: POST: Create command string
+        public async Task<DeviceCommandRawDto> GenerateCommandStringAsync(DeviceCommandDto input)
+        {
+            var parts = new List<string>
             {
-                // Get CustomerId from the token (current user)
-                var customerId = _currentUser.Id;
+                input.OnOrOff.ToString(),
+                input.Mode.ToString(),
+                input.Time.ToString(),
+                input.Power.ToString()
+            };
 
-                // Set CustomerId on the DTO
-                input.CustomerId = customerId;
+            var result = string.Join(";", parts);
+            return new DeviceCommandRawDto { RawCommand = result };
+        }
 
-                // Create the entity
-                var fitnessInfo = ObjectMapper.Map<CreateUpdateFitnessInfoDto, FitnessInfo>(input);
+        // ABP-style: PUT: Update command by ID
+        public async Task<DeviceCommandRawDto> UpdateCommandStringAsync(int id, DeviceCommandDto input)
+        {
+            var entity = await Repository.GetAsync(id);
+            entity.OnOrOff = input.OnOrOff;
+            entity.Mode = input.Mode;
+            entity.Time = input.Time;
+            entity.Power = input.Power;
+            entity.CustomerId = input.CustomerId;
 
-                // Save to the database
-                var savedFitnessInfo = await Repository.InsertAsync(fitnessInfo);
+            await Repository.UpdateAsync(entity);
 
-                return ObjectMapper.Map<FitnessInfo, FitnessInfoDto>(savedFitnessInfo);
-            }
+            var raw = string.Join(";", new[]
+            {
+                input.OnOrOff.ToString(),
+                input.Mode.ToString(),
+                input.Time.ToString(),
+                input.Power.ToString(),
+                input.CustomerId?.Trim()
+            }.Where(x => !string.IsNullOrEmpty(x)));
+
+            return new DeviceCommandRawDto { RawCommand = raw };
+        }
+
+        // ABP-style: GET: Get structured payload by ID
+        public async Task<DeviceCommandDto> GetCommandAsPayloadAsync(int id)
+        {
+            var entity = await Repository.GetAsync(id);
+            return new DeviceCommandDto
+            {
+                OnOrOff = entity.OnOrOff,
+                Mode = entity.Mode,
+                Time = entity.Time,
+                Power = entity.Power,
+                CustomerId = entity.CustomerId
+            };
+        }
+
+
+        public async Task<DeviceCommandRawDto> GetCommandStringByIdAsync(int id)
+        {
+            var entity = await Repository.GetAsync(id);
+            var parts = new List<string>
+            {
+                entity.OnOrOff.ToString(),
+                entity.Mode.ToString(),
+                entity.Time.ToString(),
+                entity.Power.ToString()
+            };
+
+
+            var raw = string.Join(";", parts);
+            return new DeviceCommandRawDto { RawCommand = raw };
+
         }
     }
-
-
 }
+

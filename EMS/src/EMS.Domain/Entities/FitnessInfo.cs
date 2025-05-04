@@ -9,12 +9,14 @@ namespace EMS.Entities
 {
     public class FitnessInfo : FullAuditedAggregateRoot<int>
     {
-
+        public int OnOrOff { get; set; }
+        public int Mode { get; set; }
+        public int Time { get; set; }
         public int Power { get; set; }
-        public int Duaration { get; set; }
-        public int WorkoutId { get; set; }
-        public Guid CustomerId { get; set; }
+        public string? CustomerId { get; set; }
+
+        public int? WorkoutId { get; set; } // Now optional
         public Workout Workout { get; set; }
-       
+
     }
 }
