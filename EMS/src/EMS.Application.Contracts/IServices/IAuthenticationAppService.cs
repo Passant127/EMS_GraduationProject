@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Volo.Abp.Account;
 using Volo.Abp.Application.Services;
+using UpdateProfileDto = EMS.DTO.UpdateProfileDto;
 
 namespace EMS.IServices
 {
@@ -29,6 +31,7 @@ namespace EMS.IServices
 
         Task<UserDataDto> GetCurrentUserDetailsAsync();
 
+        Task<bool> UpdateProfileAsync(UpdateProfileDto input);
 
     }
 }

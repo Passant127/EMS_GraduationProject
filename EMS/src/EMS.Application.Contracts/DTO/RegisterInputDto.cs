@@ -27,4 +27,23 @@ namespace EMS.DTO
         public DateTime? BOD { get; set; }
         public string? Address { get; set; }
     }
+
+    public class UpdateProfileDto
+    {
+       
+        public string UserName { get; set; }
+
+        public string Email { get; set; }
+
+        public string PhoneNumber { get; set; }
+
+        public DateTime BOD { get; set; }
+
+        public float? Height { get; set; }
+
+        public float? Weight { get; set; }
+
+        public string Address { get; set; }
+    }
+
 }

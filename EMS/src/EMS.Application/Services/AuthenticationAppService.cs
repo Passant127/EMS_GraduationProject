@@ -35,6 +35,8 @@ using Microsoft.AspNetCore.Http;
 using OpenIddict.Server;
 using EMS.DTO;
 using EMS.Entities;
+using Volo.Abp.Account;
+using static Volo.Abp.Identity.Settings.IdentitySettingNames;
 
 namespace EMS.Services;
 // Service Implementation 
@@ -390,6 +392,64 @@ public class AuthenticationAppService : ApplicationService, IAuthenticationAppSe
     
         };
     }
+
+
+    public async Task<bool> UpdateProfileAsync(DTO.UpdateProfileDto input)
+    {
+        var userId = CurrentUser.Id;
+
+        if (!userId.HasValue)
+            return false; // User not authenticated
+
+        // Get identity user (for UserName, Email, Phone)
+        var identityUser = await _userManager.FindByIdAsync(userId.Value.ToString());
+        if (identityUser == null)
+            throw new EntityNotFoundException("Identity user not found.");
+
+        // Get app user (for custom fields)
+        var appUser = await _appUserRepository.GetAsync(userId.Value);
+        if (appUser == null)
+            throw new EntityNotFoundException("App user not found.");
+
+        // ✅ Update UserName if changed
+        if (!string.IsNullOrWhiteSpace(input.UserName) &&
+            !string.Equals(identityUser.UserName, input.UserName, StringComparison.Ordinal))
+        {
+            var result = await _userManager.SetUserNameAsync(identityUser, input.UserName);
+            if (!result.Succeeded)
+                throw new UserFriendlyException(result.Errors.FirstOrDefault()?.Description);
+        }
+
+        // ✅ Update Email if changed
+        if (!string.IsNullOrWhiteSpace(input.Email) &&
+            !string.Equals(identityUser.Email, input.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            var result = await _userManager.SetEmailAsync(identityUser, input.Email);
+            if (!result.Succeeded)
+                throw new UserFriendlyException(result.Errors.FirstOrDefault()?.Description);
+        }
+
+        // ✅ Update PhoneNumber if changed
+        if (!string.IsNullOrWhiteSpace(input.PhoneNumber) &&
+            !string.Equals(identityUser.PhoneNumber, input.PhoneNumber, StringComparison.Ordinal))
+        {
+            var result = await _userManager.SetPhoneNumberAsync(identityUser, input.PhoneNumber);
+            if (!result.Succeeded)
+                throw new UserFriendlyException(result.Errors.FirstOrDefault()?.Description);
+        }
+
+        // ✅ Update custom fields in AppUsers
+        appUser.Height = input.Height ?? appUser.Height;
+        appUser.Weight = input.Weight ?? appUser.Weight;
+        appUser.Address = input.Address ?? appUser.Address;
+        appUser.BOD = input.BOD != null ? DateOnly.FromDateTime(input.BOD) : appUser.BOD;
+
+        await _appUserRepository.UpdateAsync(appUser);
+
+        return true;
+    }
+
+
 
 }
 
